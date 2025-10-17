@@ -1,34 +1,41 @@
-FROM docker:28.5.1-dind
+FROM docker:28.5.1-dind-rootless
 
 USER root
 
-# Installe bash, curl, git, certificats
-RUN apk add --no-cache bash curl git ca-certificates gcompat libstdc++ \
- && update-ca-certificates || true
+# Installe les outils nécessaires pour les jobs CI/CD Azure DevOps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bash \
+        git \
+        curl \
+        ca-certificates \
+        nodejs \
+        npm && \
+    rm -rf /var/lib/apt/lists/*
 
-# Provide a robust /bin/sh wrapper compatible with Azure DevOps / GitHub Actions
+# /bin/sh wrapper compatible avec Azure DevOps / GitHub Actions
 RUN mv /bin/sh /bin/sh.orig || true && \
     cat > /bin/sh <<'SH' && chmod +x /bin/sh
 #!/bin/bash
-# Robust wrapper for Azure DevOps container startup
-# Handles cases where /bin/sh is called with "bash", "bash -c", or just "-"
+# Wrapper robuste pour les agents Azure DevOps
+# Certains jobs appellent /bin/sh avec "bash", "bash -c" ou "-"
 first_arg="$1"
- 
-# Case 1: agent passes "bash ..."
+
+# Cas 1 : "bash ..."
 if [ "$first_arg" = "bash" ]; then
   shift
   exec /bin/bash "$@"
 fi
- 
-# Case 2: agent passes "-" (login shell mode)
+
+# Cas 2 : "-"
 if [ "$first_arg" = "-" ]; then
   shift
   exec /bin/bash "$@"
 fi
- 
-# Default: delegate to bash, preserving args
+
+# Par défaut : exécute bash avec les mêmes arguments
 exec /bin/bash "$@"
 SH
- 
-# Keep the base image entrypoint behavior
+
+# Évite que le conteneur se termine immédiatement (utile pour les agents)
 CMD ["sleep", "infinity"]
