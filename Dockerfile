@@ -6,16 +6,29 @@ USER root
 RUN apk add --no-cache bash curl git ca-certificates nodejs npm \
  && update-ca-certificates || true
 
-# Wrapper /bin/sh compatible Azure DevOps
+# Provide a robust /bin/sh wrapper compatible with Azure DevOps / GitHub Actions
 RUN mv /bin/sh /bin/sh.orig || true && \
     cat > /bin/sh <<'SH' && chmod +x /bin/sh
 #!/bin/bash
-# Handles Azure DevOps agent invocations: "bash", "bash -c", or "-"
-case "$1" in
-  bash) shift; exec /bin/bash "$@";;
-  -)    shift; exec /bin/bash "$@";;
-  *)    exec /bin/bash "$@";;
-esac
+# Robust wrapper for Azure DevOps container startup
+# Handles cases where /bin/sh is called with "bash", "bash -c", or just "-"
+first_arg="$1"
+ 
+# Case 1: agent passes "bash ..."
+if [ "$first_arg" = "bash" ]; then
+  shift
+  exec /bin/bash "$@"
+fi
+ 
+# Case 2: agent passes "-" (login shell mode)
+if [ "$first_arg" = "-" ]; then
+  shift
+  exec /bin/bash "$@"
+fi
+ 
+# Default: delegate to bash, preserving args
+exec /bin/bash "$@"
 SH
-
+ 
+# Keep the base image entrypoint behavior
 CMD ["sleep", "infinity"]
