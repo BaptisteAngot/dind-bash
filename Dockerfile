@@ -1,21 +1,15 @@
-FROM docker:28.0.1
- 
-USER root
- 
-# Install bash and gcompat (glibc compatibility), plus common utilities
+# Utilise une image Docker-in-Docker récente et stable
+FROM docker:28.5.1-dind
 
-RUN apk add --no-cache \
-      bash \
-      gcompat \
-      curl \
-      ca-certificates \
-&& update-ca-certificates || true
- 
-# Do not override the base image entrypoint — preserve original behavior.
+# Installe bash, curl et git pour les scripts CI/CD
+RUN apk add --no-cache bash curl git
 
-# Ensure bash is available on PATH (/bin/bash is provided by apk).
- 
-# Default to a POSIX shell command to keep container runnable if no command supplied.
+# Définit bash comme shell par défaut
+SHELL ["/bin/bash", "-c"]
 
-CMD ["sh"]
- 
+# Définir un entrypoint neutre pour éviter les erreurs "cannot execute binary file"
+# Azure DevOps lance par défaut /usr/bin/bash, donc on évite toute collision avec un entrypoint Docker d'origine
+ENTRYPOINT ["/bin/bash", "-c"]
+
+# Empêche le conteneur de se terminer immédiatement (utile pour les jobs interactifs)
+CMD ["sleep", "infinity"]
