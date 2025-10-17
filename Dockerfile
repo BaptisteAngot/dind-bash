@@ -2,33 +2,28 @@ FROM docker:28.5.1-dind
 
 USER root
 
-# Install bash, gcompat and common utilities
-RUN apk add --no-cache bash gcompat curl git ca-certificates \
+# ---- Installe bash et utilitaires de base ----
+RUN apk add --no-cache bash curl git gcompat ca-certificates \
  && update-ca-certificates || true
 
-# Provide a robust /bin/sh wrapper compatible with Azure DevOps / GitHub Actions
+# ---- Installe glibc complète (fournie par sgerrand) ----
+# Ce paquet apporte les symboles C++ manquants utilisés par Node.js
+ENV GLIBC_VER=2.35-r1
+RUN curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    curl -Lo glibc-${GLIBC_VER}.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VER}/glibc-${GLIBC_VER}.apk && \
+    apk add --no-cache glibc-${GLIBC_VER}.apk && \
+    rm -f glibc-${GLIBC_VER}.apk
+
+# ---- Wrapper /bin/sh (garde compatibilité Azure DevOps) ----
 RUN mv /bin/sh /bin/sh.orig || true && \
     cat > /bin/sh <<'SH' && chmod +x /bin/sh
 #!/bin/bash
-# Robust wrapper for Azure DevOps container startup
-# Handles cases where /bin/sh is called with "bash", "bash -c", or just "-"
-first_arg="$1"
-
-# Case 1: agent passes "bash ..."
-if [ "$first_arg" = "bash" ]; then
-  shift
-  exec /bin/bash "$@"
-fi
-
-# Case 2: agent passes "-" (login shell mode)
-if [ "$first_arg" = "-" ]; then
-  shift
-  exec /bin/bash "$@"
-fi
-
-# Default: delegate to bash, preserving args
-exec /bin/bash "$@"
+# Handles Azure DevOps agent invocations: "bash", "bash -c", or "-"
+case "$1" in
+  bash) shift; exec /bin/bash "$@";;
+  -)    shift; exec /bin/bash "$@";;
+  *)    exec /bin/bash "$@";;
+esac
 SH
 
-# Keep the base image entrypoint behavior
 CMD ["sleep", "infinity"]
