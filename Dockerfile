@@ -6,9 +6,9 @@ USER root
 RUN apk add --no-cache bash gcompat curl git ca-certificates \
  && update-ca-certificates || true
 
-# Provide a robust /bin/sh wrapper for Azure DevOps / GitHub Actions
+# Provide a robust /bin/sh wrapper compatible with Azure DevOps / GitHub Actions
 RUN mv /bin/sh /bin/sh.orig || true && \
-    cat > /bin/sh <<'SH'
+    cat > /bin/sh <<'SH' && chmod +x /bin/sh
 #!/bin/bash
 # If first argument is "bash", convert invocation to: /bin/bash -c "$remaining"
 if [ "$#" -ge 1 ] && [ "$1" = "bash" ]; then
@@ -19,7 +19,6 @@ fi
 # Otherwise, delegate to bash preserving args (useful if agent passes something else)
 exec /bin/bash "$@"
 SH
-RUN chmod +x /bin/sh
 
 # Keep the base image entrypoint behavior
 CMD ["sleep", "infinity"]
