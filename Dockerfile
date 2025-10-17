@@ -1,14 +1,22 @@
-FROM docker:28.0.1
+# Utilise l'image Docker-in-Docker basée sur Debian (et non Alpine)
+FROM docker:28.0.1-dind
 
 USER root
- 
-# install bash and gcompat so glibc-linked binaries (like Azure's Node) can run
 
-RUN apk add --no-cache bash gcompat curl ca-certificates
- 
-# Preserve original entrypoint if present
+# Mise à jour + installation des outils nécessaires
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      bash \
+      curl \
+      ca-certificates \
+      nodejs \
+      npm && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# Vérification (facultatif mais utile en CI)
+RUN bash --version && docker --version && node --version && npm --version
 
-CMD ["sh"]
- 
+# Entrypoint Docker classique
+ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
+CMD ["bash"]
