@@ -3,7 +3,7 @@ FROM docker:28.5.1-dind
 USER root
 
 # Installe bash, curl, git, certificats
-RUN apk add --no-cache bash curl git ca-certificates ndejs npm \
+RUN apk add --no-cache bash curl git ca-certificates nodejs npm \
  && update-ca-certificates || true
 
 # Wrapper /bin/sh compatible Azure DevOps
