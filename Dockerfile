@@ -17,6 +17,10 @@ RUN apt-get update \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
+# Provide a robust /bin/sh wrapper compatible with Azure DevOps / GitHub Actions
+RUN mv /bin/sh /bin/sh.orig || true && \
+    cat > /bin/sh <<'SH' && chmod +x /bin/sh
+#!/bin/bash
 # Robust wrapper for Azure DevOps container startup
 # Handles cases where /bin/sh is called with "bash", "bash -c", or just "-"
 first_arg="$1"
