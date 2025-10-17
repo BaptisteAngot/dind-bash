@@ -11,7 +11,7 @@ ENV GLIBC_VER=2.34-r0
 RUN set -eux; \
     curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub; \
     curl -Lo glibc-${GLIBC_VER}.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VER}/glibc-${GLIBC_VER}.apk; \
-    apk add --no-cache glibc-${GLIBC_VER}.apk || { echo "⚠️ glibc install failed"; cat glibc-${GLIBC_VER}.apk; exit 1; }; \
+    apk add --no-cache glibc-${GLIBC_VER}.apk || { echo "glibc install failed"; cat glibc-${GLIBC_VER}.apk; exit 1; }; \
     rm -f glibc-${GLIBC_VER}.apk
 
 # Wrapper /bin/sh compatible Azure DevOps
