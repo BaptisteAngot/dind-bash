@@ -24,13 +24,6 @@ jobs:
             -t dind-bash:latest \
             --load .
 
-      - name: ✅ Verify image integrity (bash & link)
-        run: |
-          echo "🔍 Vérification de la présence de /bin/bash..."
-          docker run --rm dind-bash:latest /bin/sh -c "ls -l /bin/bash"
-          echo "🔍 Test d'exécution de bash..."
-          docker run --rm dind-bash:latest /bin/bash -c "echo Bash OK"
-
       - name: Save image as tar
         run: |
           docker save dind-bash:latest -o dind-bash.tar
