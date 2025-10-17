@@ -2,7 +2,8 @@
 FROM docker:28.5.1-dind
 
 # Installe bash, curl et git pour les scripts CI/CD
-RUN apk add --no-cache bash curl git gcompat ca-certificates
+RUN apk add --no-cache bash curl git gcompat ca-certificates \ 
+  && ln -sf /usr/bin/bash /bin/bash  
 
 # Définit bash comme shell par défaut
 SHELL ["/bin/bash", "-c"]
