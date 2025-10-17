@@ -10,13 +10,23 @@ RUN apk add --no-cache bash gcompat curl git ca-certificates \
 RUN mv /bin/sh /bin/sh.orig || true && \
     cat > /bin/sh <<'SH' && chmod +x /bin/sh
 #!/bin/bash
-# If first argument is "bash", convert invocation to: /bin/bash -c "$remaining"
-if [ "$#" -ge 1 ] && [ "$1" = "bash" ]; then
+# Robust wrapper for Azure DevOps container startup
+# Handles cases where /bin/sh is called with "bash", "bash -c", or just "-"
+first_arg="$1"
+
+# Case 1: agent passes "bash ..."
+if [ "$first_arg" = "bash" ]; then
   shift
-  # If next arg is -c then run bash -c "<script>"
-  exec /bin/bash -c "$*"
+  exec /bin/bash "$@"
 fi
-# Otherwise, delegate to bash preserving args (useful if agent passes something else)
+
+# Case 2: agent passes "-" (login shell mode)
+if [ "$first_arg" = "-" ]; then
+  shift
+  exec /bin/bash "$@"
+fi
+
+# Default: delegate to bash, preserving args
 exec /bin/bash "$@"
 SH
 
