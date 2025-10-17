@@ -1,5 +1,5 @@
 # Image Docker CLI basée sur Debian (contient glibc et apt)
-FROM docker:28.0.1-cli
+FROM docker:28.0.1-cli-debian
 
 USER root
 
