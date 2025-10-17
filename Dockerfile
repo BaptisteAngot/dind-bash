@@ -1,17 +1,21 @@
-FROM ubuntu:22.04
-ENV DEBIAN_FRONTEND=noninteractive
+FROM docker:28.0.1
  
-# install bash, curl, ca-certificates, and docker CLI
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release bash \
-&& mkdir -p /etc/apt/keyrings \
-&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-> /etc/apt/sources.list.d/docker.list \
-&& apt-get update \
-&& apt-get install -y --no-install-recommends docker-ce-cli \
-&& rm -rf /var/lib/apt/lists/*
+USER root
  
-# replicate original docker image entrypoint if required (adjust path if needed)
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# Install bash and gcompat (glibc compatibility), plus common utilities
+
+RUN apk add --no-cache \
+      bash \
+      gcompat \
+      curl \
+      ca-certificates \
+&& update-ca-certificates || true
+ 
+# Do not override the base image entrypoint — preserve original behavior.
+
+# Ensure bash is available on PATH (/bin/bash is provided by apk).
+ 
+# Default to a POSIX shell command to keep container runnable if no command supplied.
+
 CMD ["sh"]
+ 
